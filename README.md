@@ -2,9 +2,6 @@
 
 A smart, browser-based ATS (Applicant Tracking System) resume analyzer built for BCA / Full Stack students to check how job-ready their resume is.
 
-### 🚀 Live Demo
-https://your-vercel-link.vercel.app
-
 ### ✨ Features
 - 📄 Upload PDF Resume (Drag & Drop)
 - 🔍 Extracts text using PDF.js
