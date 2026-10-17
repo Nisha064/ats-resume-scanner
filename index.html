@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume ATS Scanner - Nisha</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body{font-family:Arial;background:#f5f7fb;display:flex;justify-content:center;padding:20px}
+  .box{background:#fff;padding:25px;border-radius:14px;width:95%;max-width:450px;box-shadow:0 6px 20px rgba(0,0,0,.1);text-align:center}
+  input{margin:15px 0;padding:10px;width:100%;border:2px dashed #4a6cf7;border-radius:8px}
+  #result{text-align:left;margin-top:15px;background:#f9faff;padding:12px;border-radius:8px;font-size:14px;line-height:1.6}
+  .found{color:green} .missing{color:red;font-weight:bold}
+  canvas{margin-top:15px}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>Resume ATS Scanner</h2>
+  <p style="font-size:13px;color:#666">For Full Stack / BCA Roles</p>
+  <input type="file" id="resumeFile" accept=".pdf">
+  <div id="result">Upload your PDF resume to see score...</div>
+  <canvas id="scoreChart"></canvas>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+const keywords = ["Python","JavaScript","SQL","HTML5","CSS3","Git","React","Chart.js","Local Storage","Responsive Design","IoT","API"];
+
+document.getElementById('resumeFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  document.getElementById('result').innerHTML = "Scanning...";
+  
+  const text = await getTextFromPDF(file);
+  checkATS(text);
+});
+
+async function getTextFromPDF(file){
+  const url = URL.createObjectURL(file);
+  const pdf = await pdfjsLib.getDocument(url).promise;
+  let fullText = "";
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    fullText += content.items.map(s=>s.str).join(" ")+" ";
+  }
+  return fullText;
+}
+
+let myChart = null;
+function checkATS(text){
+  let found=[], missing=[];
+  keywords.forEach(k=>{
+    if(text.toLowerCase().includes(k.toLowerCase())) found.push(k);
+    else missing.push(k);
+  });
+  let score = Math.round((found.length/keywords.length)*100);
+
+  document.getElementById('result').innerHTML = `
+    <b>ATS Score: ${score}/100</b><br><br>
+    <span class="found">✓ Found (${found.length}): ${found.join(", ")}</span><br><br>
+    <span class="missing">✗ Missing (${missing.length}): ${missing.join(", ")}</span><br><br>
+    <small>Tip: Missing keywords ko resume me add karo</small>
+  `;
+
+  const ctx = document.getElementById('scoreChart');
+  if(myChart) myChart.destroy();
+  myChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels:['Matched','Missing'], datasets:[{ data:[score,100-score], backgroundColor:['#4a6cf7','#ff6b6b'] }] },
+    options:{ plugins:{ legend:{ position:'bottom' } } }
+  });
+}
+</script>
+</body>
+</html>
